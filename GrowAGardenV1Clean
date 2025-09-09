@@ -105,6 +105,7 @@ local function showMenu()
     }
 
     local toggles = {}
+    local labels = {}
     local states = {}
     local rayfieldEnabled = false
 
@@ -128,6 +129,7 @@ local function showMenu()
 
         states[name] = false
         toggles[name] = toggleBtn
+        labels[name] = label
 
         toggleBtn.MouseButton1Click:Connect(function()
             -- Other buttons require Rayfield Main Loader first
@@ -146,9 +148,10 @@ local function showMenu()
                 toggleBtn.Text = "ON"
                 toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
 
-                -- fake staged loading
-                label.Visible = false
-                toggleBtn.Visible = false
+                -- HIDE ALL BUTTONS during loading
+                for _, lbl in pairs(labels) do lbl.Visible = false end
+                for _, btn in pairs(toggles) do btn.Visible = false end
+
                 loadingFrame.Visible = true
                 loadingBar.Size = UDim2.new(0, 0, 1, 0)
                 loadingText.Visible = true
@@ -159,8 +162,11 @@ local function showMenu()
                     if index > #stages then
                         loadingText.Text = "Done!"
                         task.wait(1)
-                        label.Visible = true
-                        toggleBtn.Visible = true
+
+                        -- SHOW ALL BUTTONS again
+                        for _, lbl in pairs(labels) do lbl.Visible = true end
+                        for _, btn in pairs(toggles) do btn.Visible = true end
+
                         loadingFrame.Visible = false
                         loadingText.Visible = false
 
@@ -189,6 +195,7 @@ local function showMenu()
         end)
     end
 end
+
 
 -- Start main loader
 randomLoad("Downloading assets", showMenu)
