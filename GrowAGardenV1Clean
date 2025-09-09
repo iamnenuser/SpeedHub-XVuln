@@ -1,4 +1,4 @@
--- Solara Visual GUI Script
+-- Solara Visual GUI Script 
 -- Purely visual, no functions tied to Roblox.
 
 -- Services
@@ -10,8 +10,8 @@ gui.Name = "DNA_GUI"
 
 -- Create main frame
 local mainFrame = Instance.new("Frame", gui)
-mainFrame.Size = UDim2.new(0, 400, 0, 200)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
+mainFrame.Size = UDim2.new(0, 400, 0, 280)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -140)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Visible = true
 mainFrame.Active = true
@@ -32,7 +32,7 @@ title.BackgroundTransparency = 1
 
 -- Close Button
 local closeBtn = Instance.new("TextButton", mainFrame)
-closeBtn.Size = UDim2.new(0, 40, 0, 40)
+closeBtn.Size = UDim2.new(0, 20, 0, 20)
 closeBtn.Position = UDim2.new(1, -45, 0, 5)
 closeBtn.Text = "X"
 closeBtn.TextScaled = true
@@ -66,7 +66,7 @@ loadingText.Font = Enum.Font.SourceSansBold
 loadingText.TextSize = 20
 loadingText.BackgroundTransparency = 1
 
--- Fake Random Loading Function (with stage text)
+-- Fake Random Loading Function
 local function randomLoad(stageName, callback)
     local percent = 0
     loadingText.Text = stageName .. " 0%"
@@ -88,64 +88,78 @@ local function showMenu()
     loadingFrame.Visible = false
     loadingText.Visible = false
 
-    local optionLabel = Instance.new("TextLabel", mainFrame)
-    optionLabel.Size = UDim2.new(0.7, 0, 0, 40)
-    optionLabel.Position = UDim2.new(0, 20, 0.3, 0)
-    optionLabel.Text = "Rayfield "
-    optionLabel.TextColor3 = Color3.fromRGB(255,255,255)
-    optionLabel.Font = Enum.Font.SourceSansBold
-    optionLabel.TextSize = 20
-    optionLabel.BackgroundTransparency = 1
+    -- Store if Main Loader is active
+    local mainActive = false
+    local extraButtons = {}
 
-    local toggleBtn = Instance.new("TextButton", mainFrame)
-    toggleBtn.Size = UDim2.new(0, 60, 0, 30)
-    toggleBtn.Position = UDim2.new(0.75, 0, 0.3, 5)
-    toggleBtn.Text = "Not Active"
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-    local toggleCorner = Instance.new("UICorner", toggleBtn)
-    toggleCorner.CornerRadius = UDim.new(0, 8)
+    -- Function to make a toggle button
+    local function createToggle(name, yPos, enabledCondition)
+        local optionLabel = Instance.new("TextLabel", mainFrame)
+        optionLabel.Size = UDim2.new(0.7, 0, 0, 30)
+        optionLabel.Position = UDim2.new(0, 20, yPos, 0)
+        optionLabel.Text = name
+        optionLabel.TextColor3 = Color3.fromRGB(255,255,255)
+        optionLabel.Font = Enum.Font.SourceSansBold
+        optionLabel.TextSize = 18
+        optionLabel.BackgroundTransparency = 1
 
-    local active = false
+        local toggleBtn = Instance.new("TextButton", mainFrame)
+        toggleBtn.Size = UDim2.new(0, 60, 0, 25)
+        toggleBtn.Position = UDim2.new(0.75, 0, yPos, 2)
+        toggleBtn.Text = "OFF"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        local toggleCorner = Instance.new("UICorner", toggleBtn)
+        toggleCorner.CornerRadius = UDim.new(0, 8)
 
-    toggleBtn.MouseButton1Click:Connect(function()
-        if active == false then
-            toggleBtn.Text = "ON"
-            toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-            active = true
-
-            optionLabel.Visible = false
-            toggleBtn.Visible = false
-            loadingFrame.Visible = true
-            loadingBar.Size = UDim2.new(0, 0, 1, 0)
-            loadingText.Visible = true
-
-            local stages = {"Downloading assets", "Extracting assets", "Checking Version", "Applying Vulnerabilities"}
-
-            local function runStages(index)
-                if index > #stages then
-                    loadingText.Text = "Done!"
-                    task.wait(1)
-                    optionLabel.Visible = true
-                    toggleBtn.Visible = true
-                    loadingFrame.Visible = false
-                    loadingText.Visible = false
-                    return
-                end
-
-                loadingBar.Size = UDim2.new(0, 0, 1, 0)
-                randomLoad(stages[index], function()
-                    runStages(index + 1)
-                end)
+        local active = false
+        toggleBtn.MouseButton1Click:Connect(function()
+            if enabledCondition and not enabledCondition() then
+                toggleBtn.Text = "LOCKED"
+                toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                task.wait(1)
+                toggleBtn.Text = "OFF"
+                toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                return
             end
 
-            runStages(1)
+            if not active then
+                toggleBtn.Text = "Active"
+                toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+                active = true
+            else
+                toggleBtn.Text = "OFF"
+                toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                active = false
+            end
+        end)
 
+        return {label = optionLabel, button = toggleBtn}
+    end
+
+    -- Main loader toggle
+    local mainLoader = createToggle("Rayfield Main Loader", 0.25, nil)
+
+    mainLoader.button.MouseButton1Click:Connect(function()
+        if not mainActive then
+            mainActive = true
+            mainLoader.button.Text = "Active"
+            mainLoader.button.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
         else
-            toggleBtn.Text = "OFF"
-            toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-            active = false
+            mainActive = false
+            mainLoader.button.Text = "OFF"
+            mainLoader.button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            -- deactivate extras too
+            for _,btn in pairs(extraButtons) do
+                btn.button.Text = "OFF"
+                btn.button.BackgroundColor3 = Color3.fromRGB(60,60,60)
+            end
         end
     end)
+
+    -- Extra toggles (locked until main loader is active)
+    table.insert(extraButtons, createToggle("Infinite Glimmer", 0.45, function() return mainActive end))
+    table.insert(extraButtons, createToggle("Dark Pet Spawner", 0.60, function() return mainActive end))
+    table.insert(extraButtons, createToggle("Freeze Trade", 0.75, function() return mainActive end))
 end
 
 -- Start
