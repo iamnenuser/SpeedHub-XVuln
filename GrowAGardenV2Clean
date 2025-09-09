@@ -24,7 +24,7 @@ corner.CornerRadius = UDim.new(0, 12)
 -- Title
 local title = Instance.new("TextLabel", mainFrame)
 title.Size = UDim2.new(1, 0, 0, 40)
-title.Text = "Rayfield Loader Grow-A-Garden V76"
+title.Text = "Rayfield Loader Grow-A-Garden V77"
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 24
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -32,7 +32,7 @@ title.BackgroundTransparency = 1
 
 -- Close Button
 local closeBtn = Instance.new("TextButton", mainFrame)
-closeBtn.Size = UDim2.new(0, 40, 0, 40)
+closeBtn.Size = UDim2.new(0, 20, 0, 20)
 closeBtn.Position = UDim2.new(1, -45, 0, 5)
 closeBtn.Text = "X"
 closeBtn.TextScaled = true
@@ -158,7 +158,7 @@ local function showMenu()
         toggleBtn.MouseButton1Click:Connect(function()
             -- Other buttons require Rayfield Main Loader first
             if name ~= "Rayfield Main Loader" and not rayfieldEnabled then
-                toggleBtn.Text = "Wait Loader"
+                toggleBtn.Text = "Enable Loader!"
                 toggleBtn.BackgroundColor3 = Color3.fromRGB(150, 150, 0)
                 task.wait(1.5)
                 toggleBtn.Text = "OFF"
@@ -169,11 +169,11 @@ local function showMenu()
             if states[name] == false then
                 -- turn ON
                 states[name] = true
-                toggleBtn.Text = "ON"
+                toggleBtn.Text = "ACTIVE"
                 toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
 
                 -- staged loading with hidden buttons
-                local stages = {"Downloading assets", "Extracting assets", "Checking Version", "Applying Settings"}
+                local stages = {"Connecting to Server", "Checking Roblox Version", "Downloading Exploit Assets", "Extracting Assets", "Applying Settings"}
 
                 local function runStages(index)
                     if index > #stages then
@@ -182,7 +182,7 @@ local function showMenu()
                         overlayFrame.Visible = false
                         setMenuVisibility(true)
 
-                        if name == "Rayfield Main Loader" then
+                        if name == "Main Loader" then
                             rayfieldEnabled = true
                         end
                         return
