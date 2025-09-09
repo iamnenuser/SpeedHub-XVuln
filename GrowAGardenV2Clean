@@ -24,7 +24,7 @@ corner.CornerRadius = UDim.new(0, 12)
 -- Title
 local title = Instance.new("TextLabel", mainFrame)
 title.Size = UDim2.new(1, 0, 0, 40)
-title.Text = "Rayfield Loader Grow-A-Garden V77"
+title.Text = "Rayfield Loader Grow-A-Garden V78"
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 24
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -182,7 +182,7 @@ local function showMenu()
                         overlayFrame.Visible = false
                         setMenuVisibility(true)
 
-                        if name == "Main Loader" then
+                        if name == "Rayfield Main Loader" then
                             rayfieldEnabled = true
                         end
                         return
