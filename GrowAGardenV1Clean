@@ -10,8 +10,8 @@ gui.Name = "DNA_GUI"
 
 -- Create main frame
 local mainFrame = Instance.new("Frame", gui)
-mainFrame.Size = UDim2.new(0, 400, 0, 200)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
+mainFrame.Size = UDim2.new(0, 420, 0, 250)
+mainFrame.Position = UDim2.new(0.5, -210, 0.5, -125)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Visible = true
 mainFrame.Active = true
@@ -66,7 +66,9 @@ loadingText.Font = Enum.Font.SourceSansBold
 loadingText.TextSize = 20
 loadingText.BackgroundTransparency = 1
 
--- Fake Random Loading Function (with stage text + hangs)
+-------------------------------------------------------------------
+-- Randomized Fake Loading Function
+-------------------------------------------------------------------
 local function randomLoad(stageName, callback)
     local percent = 0
     loadingText.Text = stageName .. " 0%"
@@ -78,80 +80,115 @@ local function randomLoad(stageName, callback)
         loadingBar:TweenSize(UDim2.new(percent/100, 0, 1, 0), "Out", "Quad", 0.4, true)
         loadingText.Text = stageName .. " " .. percent .. "%"
 
-        -- random hang moments
+        -- random hang
         if math.random(1,10) > 8 then
-            task.wait(math.random(2, 8)) 
+            task.wait(math.random(2, 8))
         end
     end
-    -- small settle pause before next stage
-    task.wait(math.random(1, 3))
+    task.wait(math.random(1, 3)) -- settle pause
     callback()
 end
 
--- Menu after load
+-------------------------------------------------------------------
+-- Menu After Load
+-------------------------------------------------------------------
 local function showMenu()
     loadingFrame.Visible = false
     loadingText.Visible = false
 
-    local optionLabel = Instance.new("TextLabel", mainFrame)
-    optionLabel.Size = UDim2.new(0.7, 0, 0, 40)
-    optionLabel.Position = UDim2.new(0, 20, 0.3, 0)
-    optionLabel.Text = "Rayfield "
-    optionLabel.TextColor3 = Color3.fromRGB(255,255,255)
-    optionLabel.Font = Enum.Font.SourceSansBold
-    optionLabel.TextSize = 20
-    optionLabel.BackgroundTransparency = 1
+    -- Buttons List
+    local options = {
+        "Rayfield Main Loader",
+        "Infinite Glimmer",
+        "Dark Pet Spawner",
+        "Freeze Trade"
+    }
 
-    local toggleBtn = Instance.new("TextButton", mainFrame)
-    toggleBtn.Size = UDim2.new(0, 60, 0, 30)
-    toggleBtn.Position = UDim2.new(0.75, 0, 0.3, 5)
-    toggleBtn.Text = "Not Active"
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-    local toggleCorner = Instance.new("UICorner", toggleBtn)
-    toggleCorner.CornerRadius = UDim.new(0, 8)
+    local toggles = {}
+    local states = {}
+    local rayfieldEnabled = false
 
-    local active = false
+    for i, name in ipairs(options) do
+        local label = Instance.new("TextLabel", mainFrame)
+        label.Size = UDim2.new(0.6, 0, 0, 30)
+        label.Position = UDim2.new(0, 20, 0.3 + (i-1)*0.15, 0)
+        label.Text = name
+        label.TextColor3 = Color3.fromRGB(255,255,255)
+        label.Font = Enum.Font.SourceSansBold
+        label.TextSize = 20
+        label.BackgroundTransparency = 1
 
-    toggleBtn.MouseButton1Click:Connect(function()
-        if active == false then
-            toggleBtn.Text = "ON"
-            toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-            active = true
+        local toggleBtn = Instance.new("TextButton", mainFrame)
+        toggleBtn.Size = UDim2.new(0, 100, 0, 30)
+        toggleBtn.Position = UDim2.new(0.7, 0, 0.3 + (i-1)*0.15, 0)
+        toggleBtn.Text = "OFF"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+        local toggleCorner = Instance.new("UICorner", toggleBtn)
+        toggleCorner.CornerRadius = UDim.new(0, 8)
 
-            optionLabel.Visible = false
-            toggleBtn.Visible = false
-            loadingFrame.Visible = true
-            loadingBar.Size = UDim2.new(0, 0, 1, 0)
-            loadingText.Visible = true
+        states[name] = false
+        toggles[name] = toggleBtn
 
-            local stages = {"Downloading assets", "Extracting assets", "Checking Version", "Applying Vulnerabilities"}
-
-            local function runStages(index)
-                if index > #stages then
-                    loadingText.Text = "Done!"
-                    task.wait(1)
-                    optionLabel.Visible = true
-                    toggleBtn.Visible = true
-                    loadingFrame.Visible = false
-                    loadingText.Visible = false
-                    return
-                end
-
-                loadingBar.Size = UDim2.new(0, 0, 1, 0)
-                randomLoad(stages[index], function()
-                    runStages(index + 1)
-                end)
+        toggleBtn.MouseButton1Click:Connect(function()
+            -- Other buttons require Rayfield Main Loader first
+            if name ~= "Rayfield Main Loader" and not rayfieldEnabled then
+                toggleBtn.Text = "Wait Loader"
+                toggleBtn.BackgroundColor3 = Color3.fromRGB(150, 150, 0)
+                task.wait(1.5)
+                toggleBtn.Text = "OFF"
+                toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+                return
             end
 
-            runStages(1)
+            if states[name] == false then
+                -- turn ON
+                states[name] = true
+                toggleBtn.Text = "ON"
+                toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
 
-        else
-            toggleBtn.Text = "OFF"
-            toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-            active = false
-        end
-    end)
+                -- fake staged loading
+                label.Visible = false
+                toggleBtn.Visible = false
+                loadingFrame.Visible = true
+                loadingBar.Size = UDim2.new(0, 0, 1, 0)
+                loadingText.Visible = true
+
+                local stages = {"Downloading assets", "Extracting assets", "Checking Version", "Applying Settings"}
+
+                local function runStages(index)
+                    if index > #stages then
+                        loadingText.Text = "Done!"
+                        task.wait(1)
+                        label.Visible = true
+                        toggleBtn.Visible = true
+                        loadingFrame.Visible = false
+                        loadingText.Visible = false
+
+                        if name == "Rayfield Main Loader" then
+                            rayfieldEnabled = true
+                        end
+                        return
+                    end
+
+                    loadingBar.Size = UDim2.new(0, 0, 1, 0)
+                    randomLoad(stages[index], function()
+                        runStages(index + 1)
+                    end)
+                end
+
+                runStages(1)
+            else
+                -- turn OFF
+                states[name] = false
+                toggleBtn.Text = "OFF"
+                toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+                if name == "Rayfield Main Loader" then
+                    rayfieldEnabled = false
+                end
+            end
+        end)
+    end
 end
 
--- Start
+-- Start main loader
 randomLoad("Downloading assets", showMenu)
