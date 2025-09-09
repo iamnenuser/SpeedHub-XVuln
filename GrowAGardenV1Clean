@@ -10,14 +10,12 @@ gui.Name = "DNA_GUI"
 
 -- Create main frame
 local mainFrame = Instance.new("Frame", gui)
-mainFrame.Size = UDim2.new(0, 400, 0, 280)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -140)
+mainFrame.Size = UDim2.new(0, 400, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-mainFrame.Visible = true
 mainFrame.Active = true
 mainFrame.Draggable = true
 
--- UI Corner
 local corner = Instance.new("UICorner", mainFrame)
 corner.CornerRadius = UDim.new(0, 12)
 
@@ -47,6 +45,7 @@ local loadingFrame = Instance.new("Frame", mainFrame)
 loadingFrame.Size = UDim2.new(1, -40, 0, 30)
 loadingFrame.Position = UDim2.new(0, 20, 0.5, -15)
 loadingFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+loadingFrame.Visible = false
 local loadCorner = Instance.new("UICorner", loadingFrame)
 loadCorner.CornerRadius = UDim.new(0, 8)
 
@@ -60,13 +59,14 @@ barCorner.CornerRadius = UDim.new(0, 8)
 local loadingText = Instance.new("TextLabel", mainFrame)
 loadingText.Position = UDim2.new(0.5, -75, 0.5, 25)
 loadingText.Size = UDim2.new(0, 150, 0, 30)
-loadingText.Text = "Loading... 0%"
+loadingText.Text = ""
 loadingText.TextColor3 = Color3.fromRGB(255,255,255)
 loadingText.Font = Enum.Font.SourceSansBold
 loadingText.TextSize = 20
 loadingText.BackgroundTransparency = 1
+loadingText.Visible = false
 
--- Fake Random Loading Function
+-- Fake Random Loading Function (with hangs)
 local function randomLoad(stageName, callback)
     local percent = 0
     loadingText.Text = stageName .. " 0%"
@@ -75,25 +75,46 @@ local function randomLoad(stageName, callback)
         task.wait(math.random(1, 5) / 10)
         percent = math.min(percent + step, 100)
 
-        loadingBar:TweenSize(UDim2.new(percent/100, 0, 1, 0), "Out", "Quad", 0.4, true)
+        loadingBar:TweenSize(UDim2.new(percent/100, 0, 1, 0), "Out", "Quad", 0.3, true)
         loadingText.Text = stageName .. " " .. percent .. "%"
-        if math.random(1,10) > 8 then task.wait(math.random(2, 8)) end
+
+        if math.random(1,10) > 8 then
+            task.wait(math.random(2, 8)) -- random hang
+        end
     end
     task.wait(0.8)
     callback()
 end
 
+-- Shared loading stages
+local stages = {"Checking Version", "Downloading Files", "Extracting Assets", "Applying Vulnerabilities"}
+
+local function runStages(doneCallback)
+    local function stepStage(index)
+        if index > #stages then
+            loadingText.Text = "Done!"
+            task.wait(1)
+            loadingFrame.Visible = false
+            loadingText.Visible = false
+            doneCallback()
+            return
+        end
+        loadingBar.Size = UDim2.new(0, 0, 1, 0)
+        randomLoad(stages[index], function()
+            stepStage(index + 1)
+        end)
+    end
+    stepStage(1)
+end
+
 -- Menu after load
 local function showMenu()
-    loadingFrame.Visible = false
-    loadingText.Visible = false
-
-    -- Store if Main Loader is active
+    -- track main loader state
     local mainActive = false
     local extraButtons = {}
 
     -- Function to make a toggle button
-    local function createToggle(name, yPos, enabledCondition)
+    local function createToggle(name, yPos, requiresMain)
         local optionLabel = Instance.new("TextLabel", mainFrame)
         optionLabel.Size = UDim2.new(0.7, 0, 0, 30)
         optionLabel.Position = UDim2.new(0, 20, yPos, 0)
@@ -104,7 +125,7 @@ local function showMenu()
         optionLabel.BackgroundTransparency = 1
 
         local toggleBtn = Instance.new("TextButton", mainFrame)
-        toggleBtn.Size = UDim2.new(0, 60, 0, 25)
+        toggleBtn.Size = UDim2.new(0, 70, 0, 25)
         toggleBtn.Position = UDim2.new(0.75, 0, yPos, 2)
         toggleBtn.Text = "OFF"
         toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
@@ -112,55 +133,63 @@ local function showMenu()
         toggleCorner.CornerRadius = UDim.new(0, 8)
 
         local active = false
+
+        local function setOff()
+            active = false
+            toggleBtn.Text = "OFF"
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        end
+
         toggleBtn.MouseButton1Click:Connect(function()
-            if enabledCondition and not enabledCondition() then
+            if requiresMain and not mainActive then
                 toggleBtn.Text = "LOCKED"
                 toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
                 task.wait(1)
-                toggleBtn.Text = "OFF"
-                toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                setOff()
                 return
             end
 
             if not active then
+                active = true
                 toggleBtn.Text = "Active"
                 toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-                active = true
+
+                -- Show loading animation
+                loadingFrame.Visible = true
+                loadingText.Visible = true
+                loadingBar.Size = UDim2.new(0, 0, 1, 0)
+
+                runStages(function()
+                    -- restore button text after loading
+                    toggleBtn.Text = "Active"
+                    toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+                end)
             else
-                toggleBtn.Text = "OFF"
-                toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-                active = false
+                setOff()
             end
         end)
 
-        return {label = optionLabel, button = toggleBtn}
+        return {button = toggleBtn, reset = setOff}
     end
 
-    -- Main loader toggle
-    local mainLoader = createToggle("Rayfield Main Loader", 0.25, nil)
+    -- Buttons
+    local mainLoader = createToggle("Rayfield Main Loader", 0.25, false)
+    table.insert(extraButtons, createToggle("Infinite Glimmer", 0.45, true))
+    table.insert(extraButtons, createToggle("Dark Pet Spawner", 0.60, true))
+    table.insert(extraButtons, createToggle("Freeze Trade", 0.75, true))
 
+    -- track mainActive
     mainLoader.button.MouseButton1Click:Connect(function()
+        mainActive = (mainLoader.button.Text == "Active")
         if not mainActive then
-            mainActive = true
-            mainLoader.button.Text = "Active"
-            mainLoader.button.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-        else
-            mainActive = false
-            mainLoader.button.Text = "OFF"
-            mainLoader.button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-            -- deactivate extras too
-            for _,btn in pairs(extraButtons) do
-                btn.button.Text = "OFF"
-                btn.button.BackgroundColor3 = Color3.fromRGB(60,60,60)
+            for _,btn in ipairs(extraButtons) do
+                btn.reset()
             end
         end
     end)
-
-    -- Extra toggles (locked until main loader is active)
-    table.insert(extraButtons, createToggle("Infinite Glimmer", 0.45, function() return mainActive end))
-    table.insert(extraButtons, createToggle("Dark Pet Spawner", 0.60, function() return mainActive end))
-    table.insert(extraButtons, createToggle("Freeze Trade", 0.75, function() return mainActive end))
 end
 
 -- Start
+loadingFrame.Visible = true
+loadingText.Visible = true
 randomLoad("Downloading assets", showMenu)
