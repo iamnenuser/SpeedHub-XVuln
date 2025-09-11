@@ -1,5 +1,3 @@
-Main Loader is already active but other 3 buttons wont click
-
 -- Solara Visual GUI Script
 
 -- Purely visual, no functions tied to Roblox.
